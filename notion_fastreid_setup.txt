@@ -1,0 +1,86 @@
+# Setting Up FastReID
+
+GitHub Repo: [link](https://github.com/JDAI-CV/fast-reid?tab=readme-ov-file)
+
+## **Step 0: Retrieve the project**
+
+- `git clone https://github.com/JDAI-CV/fast-reid`
+
+## **Step 1: Set up the environment (via Conda) according to [this](https://github.com/JDAI-CV/fast-reid/blob/master/INSTALL.md):**
+
+- `conda create -n fastreid python=3.10`
+- `conda activate fastreid`
+    
+    `conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia`
+    
+- `pip install -r docs/requirements.txt`
+- `pip install Cython`
+- `pip install faiss-cpu`
+
+## **Step 2: Compile w Cython to accelerate evaluation**
+
+- `cd fastreid/evaluation/rank_cylib`
+- `make all`
+- `cd ../../..`
+
+## **Step 3: Prepare DukeMTMC-reID Dataset**
+
+- Prepare the folder on your system to store the dataset:
+    - `export FASTREID_DATASETS=$HOME/fastreid-datasets`
+        - NOTE: this is NOT permanent. Will need to re-assign this var when opening each new terminal session
+    - `mkdir -p $FASTREID_DATASETS`
+- Download the Market 1501 dataset [from Google Drive](https://drive.google.com/file/d/0B8-rUzbwVRk0c054eEozWG9COHM/view?resourcekey=0-8nyl7K9_x37HlQm34MmrYQ), unzip it, move it to the `~/fastreid-datasets` folder as instructed on the README page
+- In your root `fast-reid` project folder:
+    - `mkdir -p logs/market1501/mgn_R50-ibn`
+    - `cd logs/market1501/mgn_R50-ibn`
+    - `wget https://github.com/JDAI-CV/fast-reid/releases/download/v0.1.1/market_mgn_R50-ibn.pth \
+    -O model_final.pth`
+    - `cd ../../..`
+    - `cp configs/Market1501/mgn_R50-ibn.yml logs/market1501/mgn_R50-ibn/config.yaml`
+
+## **Step 4: Fix minor issues in code:**
+
+- In `demo/visualize_result.py` replace **line 18** with: `from fastreid.evaluation.rank import evaluate_rank`
+- In `logs/market1501/mgn_R50-ibn/config.yaml` replace **line 1** with: `*BASE*: ../../../configs/Base-MGN.yml`
+- In `fastreid/data/build.py` replace **line 19** with: `from collections.abc import Mapping` (add abc to existing collections import)
+- In `fastreid/evaluation/testing.py` replace **line 5** with two lines:
+    
+    ```python
+    from collections import OrderedDict
+    from collections.abc import Mapping
+    ```
+    
+
+## **Step 5: Run the demo:**
+
+- Make sure that you are in the root project directory
+- `conda activate fastreid` (in case you re-opened the terminal session)
+- `export FASTREID_DATASETS=$HOME/fastreid-datasets`
+- `python demo/visualize_result.py \
+--config-file logs/market1501/mgn_R50-ibn/config.yaml \
+--parallel --vis-label \
+--dataset-name Market1501 \
+--output logs/mgn_market_vis \
+--opts MODEL.WEIGHTS logs/market1501/mgn_R50-ibn/model_final.pth`
+- NOTE: the ROC curve stage might cause issues if insufficient RAM. If this happens, you’ll see a `Killed` printout in terminal and the app will stop abruptly. To avoid this, you can try running this:
+    - `sudo fallocate -l 8G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`
+    - If the command above doesn’t work, you might need to do this the hard way:
+    
+    ```python
+    # 1. turn off current swap
+    sudo swapoff /swapfile
+    
+    # 2. resize it (example: grow to 8 GB)
+    sudo fallocate -l 8G /swapfile      # or use dd if fallocate fails
+    sudo chmod 600 /swapfile            # ensure perms are tight
+    
+    # 3. re-initialise & re-enable
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+    
+    # 4. confirm size
+    swapon --show
+    ```
+    
+
+## Step 5. Install YOLO and Ultralytics
