@@ -6,9 +6,4 @@ Even regarding recent advancements in Re-ID model performance, there is no perfe
 
 Note: Must be ran in its own folder within the FastReID repo
 
-@article{he2020fastreid,
-  title={FastReID: A Pytorch Toolbox for General Instance Re-identification},
-  author={He, Lingxiao and Liao, Xingyu and Liu, Wu and Liu, Xinchen and Cheng, Peng and Mei, Tao},
-  journal={arXiv preprint arXiv:2006.02631},
-  year={2020}
-}
+He, L., Liao, X., Liu, W., Liu, X., Cheng, P., & Mei, T. (2020). FastReID: A Pytorch Toolbox for General Instance Re-identification. ArXiv Preprint ArXiv:2006.02631. 
